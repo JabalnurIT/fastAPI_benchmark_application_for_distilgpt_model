@@ -259,12 +259,16 @@ object Main {
 //      "inside_circle", "loan_type", "movie_rating",
 //      "number_series", "student_grade",
 //      "word_count")
+    val list = List("commute_type_full")
+//  ,
+//      "customers", "flight_distance")
 //    makeDirsFromList("src/assets/",list)
 
-    val programs = readAllDirsInDir("src/assets/").sorted
+//    val programs = readAllDirsInDir("src/assets/").sorted
+    val programs = list
     programs.foreach({ appName =>
       logger.info(appName)
-      if(readAllFilesInDir(s"src/assets/$appName/output/").sorted == List[String]()){
+//      if(readAllFilesInDir(s"src/assets/$appName/output/").sorted == List[String]()){
         val useModelStatus = useModelRequest(appName)
         val (currentModel, modelList) = getModelListRequest()
         logger.info(s"current model: $currentModel")
@@ -310,7 +314,7 @@ object Main {
 //          system.terminate()
 //        }
 //        println(s"delete model status: $deleteModelStatus")
-      }
+//      }
     })
 
 
