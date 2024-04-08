@@ -10,7 +10,7 @@ import spray.json.DefaultJsonProtocol.{IntJsonFormat, StringJsonFormat, mapForma
 import spray.json.{JsString, JsValue, JsonParser, enrichAny}
 
 import java.io.PrintWriter
-import scala.math.pow
+import scala.math.{ceil, pow}
 import java.io.File
 //import akka.http.scaladsl.model.HttpMessage.AlreadyDiscardedEntity.future
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest}
@@ -24,7 +24,12 @@ import scala.concurrent.duration._
 
 import scala.io.Source
 
+import java.time.LocalDateTime
+import java.time.{Duration => DurationTime}
+
 object Main {
+
+  private val format = "yyyyMMdd_HHmmss"
 
   private val appName = "main_app"
   private val logger = Logger(appName)
@@ -259,47 +264,63 @@ object Main {
 //      "inside_circle", "loan_type", "movie_rating",
 //      "number_series", "student_grade",
 //      "word_count")
-    val list = List("commute_type_full")
+    val percentageOutput = List(1,2,5,10,25,50)
+
+//    val list = List("age_analysis")
 //  ,
 //      "customers", "flight_distance")
 //    makeDirsFromList("src/assets/",list)
 
-//    val programs = readAllDirsInDir("src/assets/").sorted
-    val programs = list
+    val programs = readAllDirsInDir("src/assets/").sorted
+//    val programs = list
     programs.foreach({ appName =>
       logger.info(appName)
+      var description = List[String]()
 //      if(readAllFilesInDir(s"src/assets/$appName/output/").sorted == List[String]()){
-        val useModelStatus = useModelRequest(appName)
-        val (currentModel, modelList) = getModelListRequest()
-        logger.info(s"current model: $currentModel")
-        logger.info(s"current model: $modelList")
-        if (useModelStatus != "Success"){
-          logger.error(useModelStatus)
-          system.terminate()
-        }
-        println(s"use model status: $useModelStatus")
+      val useModelStatus = useModelRequest(appName)
+      val (currentModel, modelList) = getModelListRequest()
+      logger.info(s"current model: $currentModel")
+      logger.info(s"current model: $modelList")
+      if (useModelStatus != "Success"){
+        logger.error(useModelStatus)
+        system.terminate()
+      }
+      println(s"use model status: $useModelStatus")
 
-        val allData = fileToList(s"$basePath/$appName/input/incorrect_data.csv")
-        println(s"Total Data: ${allData.length}")
-        for (i <- 0 until math.min(5, allData.length)) {
-          println(allData(i))
-        }
-        println("-- Training --")
-        val retrainStatus = retrainRequest(allData.mkString("###"))
-        if (retrainStatus != "Success") {
-          logger.error(retrainStatus)
-          system.terminate()
-        }
-        println(s"retrain status: $retrainStatus")
+      val allData = fileToList(s"$basePath/$appName/input/incorrect_data.csv")
+      println(s"Total Data: ${allData.length}")
+      for (i <- 0 until math.min(5, allData.length)) {
+        println(allData(i))
+      }
+      println("-- Training --")
+      description = description :+ "retrain time"
+      var startTime = LocalDateTime.now()
+      val retrainStatus = retrainRequest(allData.mkString("###"))
+      if (retrainStatus != "Success") {
+        logger.error(retrainStatus)
+        system.terminate()
+      }
+      var stopTime = LocalDateTime.now()
+      val retrainTime = DurationTime.between(startTime,stopTime)
+      description = description :+ retrainTime.toString
 
-        for (i <- 0 until 6) {
-          val numRow: Int = pow(2,i).toInt
-          println(s"Num of row: $numRow")
-          val newDataset = generateInputRequest(numRow)
-          newDataset.foreach(println)
-          listToFile(s"$basePath/$appName/output/new_incorrect_dataset_$numRow.csv",newDataset)
-          println()
-        }
+      println(s"retrain status: $retrainStatus")
+
+      for (i <- 0 until 6) {
+        val numRow: Int = ceil(percentageOutput(i).toDouble / 100 * allData.length).toInt
+        println(s"Num of row: $numRow")
+        startTime = LocalDateTime.now()
+        val newDataset = generateInputRequest(numRow)
+        stopTime = LocalDateTime.now()
+        val generateInputTime = DurationTime.between(startTime,stopTime)
+        description = description :+ s"generated time of $numRow row"
+        description = description :+ generateInputTime.toString
+        newDataset.foreach(println)
+        listToFile(s"$basePath/$appName/output/new_incorrect_dataset_$numRow.csv",newDataset)
+        println()
+      }
+      listToFile(s"$basePath/$appName/output/description.csv",description)
+
 
 //        val resetModelStatus = resetModelRequest()
 //        if (resetModelStatus != "Success") {
