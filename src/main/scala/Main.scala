@@ -276,50 +276,50 @@ object Main {
     programs.foreach({ appName =>
       logger.info(appName)
       var description = List[String]()
-//      if(readAllFilesInDir(s"src/assets/$appName/output/").sorted == List[String]()){
-      val useModelStatus = useModelRequest(appName)
-      val (currentModel, modelList) = getModelListRequest()
-      logger.info(s"current model: $currentModel")
-      logger.info(s"current model: $modelList")
-      if (useModelStatus != "Success"){
-        logger.error(useModelStatus)
-        system.terminate()
-      }
-      println(s"use model status: $useModelStatus")
+      if(readAllFilesInDir(s"src/assets/$appName/output/").sorted == List[String]()){
+        val useModelStatus = useModelRequest(appName)
+        val (currentModel, modelList) = getModelListRequest()
+        logger.info(s"current model: $currentModel")
+        logger.info(s"current model: $modelList")
+        if (useModelStatus != "Success"){
+          logger.error(useModelStatus)
+          system.terminate()
+        }
+        println(s"use model status: $useModelStatus")
 
-      val allData = fileToList(s"$basePath/$appName/input/incorrect_data.csv")
-      println(s"Total Data: ${allData.length}")
-      for (i <- 0 until math.min(5, allData.length)) {
-        println(allData(i))
-      }
-      println("-- Training --")
-      description = description :+ "retrain time"
-      var startTime = LocalDateTime.now()
-      val retrainStatus = retrainRequest(allData.mkString("###"))
-      if (retrainStatus != "Success") {
-        logger.error(retrainStatus)
-        system.terminate()
-      }
-      var stopTime = LocalDateTime.now()
-      val retrainTime = DurationTime.between(startTime,stopTime)
-      description = description :+ retrainTime.toString
+        val allData = fileToList(s"$basePath/$appName/input/incorrect_data.csv")
+        println(s"Total Data: ${allData.length}")
+        for (i <- 0 until math.min(5, allData.length)) {
+          println(allData(i))
+        }
+        println("-- Training --")
+        description = description :+ "retrain time"
+        var startTime = LocalDateTime.now()
+        val retrainStatus = retrainRequest(allData.mkString("###"))
+        if (retrainStatus != "Success") {
+          logger.error(retrainStatus)
+          system.terminate()
+        }
+        var stopTime = LocalDateTime.now()
+        val retrainTime = DurationTime.between(startTime,stopTime)
+        description = description :+ retrainTime.toString
 
-      println(s"retrain status: $retrainStatus")
+        println(s"retrain status: $retrainStatus")
 
-      for (i <- 0 until 6) {
-        val numRow: Int = ceil(percentageOutput(i).toDouble / 100 * allData.length).toInt
-        println(s"Num of row: $numRow")
-        startTime = LocalDateTime.now()
-        val newDataset = generateInputRequest(numRow)
-        stopTime = LocalDateTime.now()
-        val generateInputTime = DurationTime.between(startTime,stopTime)
-        description = description :+ s"generated time of $numRow row"
-        description = description :+ generateInputTime.toString
-        newDataset.foreach(println)
-        listToFile(s"$basePath/$appName/output/new_incorrect_dataset_$numRow.csv",newDataset)
-        println()
-      }
-      listToFile(s"$basePath/$appName/output/description.csv",description)
+        for (i <- 0 until 6) {
+          val numRow: Int = ceil(percentageOutput(i).toDouble / 100 * allData.length).toInt
+          println(s"Num of row: $numRow")
+          startTime = LocalDateTime.now()
+          val newDataset = generateInputRequest(numRow)
+          stopTime = LocalDateTime.now()
+          val generateInputTime = DurationTime.between(startTime,stopTime)
+          description = description :+ s"generated time of $numRow row"
+          description = description :+ generateInputTime.toString
+          newDataset.foreach(println)
+          listToFile(s"$basePath/$appName/output/new_incorrect_dataset_$numRow.csv",newDataset)
+          println()
+        }
+        listToFile(s"$basePath/$appName/output/description.csv",description)
 
 
 //        val resetModelStatus = resetModelRequest()
@@ -335,7 +335,7 @@ object Main {
 //          system.terminate()
 //        }
 //        println(s"delete model status: $deleteModelStatus")
-//      }
+      }
     })
 
 
